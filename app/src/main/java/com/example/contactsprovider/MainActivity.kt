@@ -1,17 +1,17 @@
 package com.example.contactsprovider
 
 import android.Manifest.permission.READ_CONTACTS
-
-import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.provider.ContactsContract
 import android.provider.Settings
-import android.widget.ArrayAdapter
+import android.util.Log
 import android.widget.ListView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -28,20 +28,32 @@ import com.karumi.dexter.listener.single.PermissionListener
 class MainActivity : AppCompatActivity() {
 
     private lateinit var listView:ListView
+    private lateinit var sharedPref: SharedPreferences
+    private var appOpenTimes = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+
+
+
         listView=findViewById(R.id.listView)
 
+        sharedPref = getPreferences(Context.MODE_PRIVATE)
+        appOpenTimes = sharedPref.getInt("appOpenTimes", 0);
 
-        if (checkContactAccessPermission()) {
+        if(appOpenTimes >= 1){
+             if (checkContactAccessPermission()) {
 
             accessContacts()
         } else {
             requestContactAccessPermission()
         }
+        }
+        Log.d("appOpenTimes","$appOpenTimes")
+
+
     }
 
     private fun checkContactAccessPermission(): Boolean {
@@ -112,6 +124,18 @@ class MainActivity : AppCompatActivity() {
         listView.adapter = adapter
 
 
+    }
+
+
+
+
+    override fun onStop() {
+        super.onStop()
+        ++appOpenTimes
+        with(sharedPref.edit()) {
+            putInt("appOpenTimes", appOpenTimes)
+            apply()
+        }
     }
 
 
